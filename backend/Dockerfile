@@ -2,11 +2,13 @@
 FROM node:20-alpine
 
 # Install dependencies for speedtest-cli and Prisma
-RUN apk add --no-cache curl ca-certificates openssl
+# libc6-compat provides glibc compatibility for the speedtest binary
+RUN apk add --no-cache curl ca-certificates openssl libc6-compat
 
-# Install Ookla Speedtest CLI manually (packagecloud script has issues with Alpine)
+# Install Ookla Speedtest CLI manually
 # Detect architecture and download appropriate binary
 RUN ARCH=$(uname -m) && \
+    echo "Detected architecture: $ARCH" && \
     if [ "$ARCH" = "x86_64" ]; then \
         SPEEDTEST_URL="https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz"; \
     elif [ "$ARCH" = "aarch64" ]; then \
@@ -16,11 +18,15 @@ RUN ARCH=$(uname -m) && \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1; \
     fi && \
+    echo "Downloading from: $SPEEDTEST_URL" && \
     curl -sSL "$SPEEDTEST_URL" -o /tmp/speedtest.tgz && \
     tar -xzf /tmp/speedtest.tgz -C /tmp && \
     mv /tmp/speedtest /usr/local/bin/speedtest && \
     chmod +x /usr/local/bin/speedtest && \
-    rm -rf /tmp/speedtest.tgz /tmp/speedtest.md
+    rm -rf /tmp/speedtest.tgz /tmp/speedtest.md && \
+    echo "Speedtest installed:" && \
+    ls -la /usr/local/bin/speedtest && \
+    speedtest --version
 
 # Set working directory
 WORKDIR /app
