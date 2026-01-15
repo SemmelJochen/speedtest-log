@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Speedtest Server - normalized table for server information
+model SpeedtestServer {
+  id        Int      @id @default(autoincrement())
+  serverId  Int      @unique @map("server_id")
+  name      String?  @db.VarChar(255)
+  location  String?  @db.VarChar(255)
+  country   String?  @db.VarChar(100)
+  host      String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relation to results
+  results SpeedtestResult[]
+
+  @@map("speedtest_servers")
+}
+
+// Speedtest Results - main table for storing test results
+model SpeedtestResult {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime
+
+  // Ping data (in milliseconds)
+  pingJitter  Decimal? @map("ping_jitter") @db.Decimal(10, 3)
+  pingLatency Decimal? @map("ping_latency") @db.Decimal(10, 3)
+  pingLow     Decimal? @map("ping_low") @db.Decimal(10, 3)
+  pingHigh    Decimal? @map("ping_high") @db.Decimal(10, 3)
+
+  // Download data (bandwidth in bytes/second)
+  downloadBandwidth BigInt? @map("download_bandwidth")
+  downloadBytes     BigInt? @map("download_bytes")
+  downloadElapsed   Int?    @map("download_elapsed")
+
+  // Upload data (bandwidth in bytes/second)
+  uploadBandwidth BigInt? @map("upload_bandwidth")
+  uploadBytes     BigInt? @map("upload_bytes")
+  uploadElapsed   Int?    @map("upload_elapsed")
+
+  // Packet loss percentage
+  packetLoss Decimal? @map("packet_loss") @db.Decimal(5, 2)
+
+  // ISP information
+  isp String? @db.VarChar(255)
+
+  // External IP address
+  externalIp String? @map("external_ip") @db.VarChar(45)
+
+  // Server relation
+  serverId Int?             @map("server_id")
+  server   SpeedtestServer? @relation(fields: [serverId], references: [id])
+
+  // Result URL for detailed view on speedtest.net
+  resultUrl String? @map("result_url") @db.VarChar(500)
+
+  // Error message if test failed
+  error String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([timestamp], name: "idx_results_timestamp")
+  @@map("speedtest_results")
+}
