@@ -58,9 +58,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        # API URL wird zur Build-Zeit ins SPA einkompiliert
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+      # VITE_API_URL wird NICHT gesetzt - Frontend erkennt API automatisch
+      # basierend auf window.location.hostname (funktioniert im LAN)
     container_name: speedtest-frontend
     restart: unless-stopped
     depends_on:

@@ -3,8 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Build argument for API URL (used at build time for client-side requests)
-ARG VITE_API_URL=http://localhost:3001
+# API URL is auto-detected at runtime from window.location.hostname
+# Only set VITE_API_URL if you need to override the auto-detection
+ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copy package files
