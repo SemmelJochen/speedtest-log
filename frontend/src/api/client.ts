@@ -1,5 +1,17 @@
-// API base URL - configurable via environment variable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// API base URL - automatically detect based on current hostname for LAN access
+function getApiBase(): string {
+  // If explicitly set via environment, use that
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // Auto-detect: use same hostname as frontend, but port 3001
+  // This allows LAN access without hardcoding IPs
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:3001`;
+}
+
+const API_BASE = getApiBase();
 
 export interface SpeedtestResult {
   id: number;

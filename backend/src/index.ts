@@ -16,9 +16,12 @@ const fastify = Fastify({
 
 async function main() {
   try {
-    // Register CORS
+    // Register CORS - allow all origins for network access
     await fastify.register(cors, {
-      origin: config.corsOrigin
+      origin: true,  // Allow all origins (required for LAN access)
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
 
     // Connect to database
