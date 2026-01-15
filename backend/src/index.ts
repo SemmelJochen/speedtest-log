@@ -5,6 +5,9 @@ import { config } from './config.js';
 import { SpeedtestService } from './services/speedtest.service.js';
 import { SchedulerService } from './services/scheduler.service.js';
 import { registerRoutes } from './routes/index.js';
+import { Logger } from './utils/logger.js';
+
+const log = new Logger('Server');
 
 const prisma = new PrismaClient();
 const speedtestService = new SpeedtestService(prisma);
@@ -16,6 +19,12 @@ const fastify = Fastify({
 
 async function main() {
   try {
+    log.info('Starting Speedtest Logger API', {
+      port: config.port,
+      host: config.host,
+      cronSchedule: config.speedtestCron
+    });
+
     // Register CORS - allow all origins for network access
     await fastify.register(cors, {
       origin: true,  // Allow all origins (required for LAN access)
@@ -23,42 +32,49 @@ async function main() {
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
+    log.debug('CORS middleware registered');
 
     // Connect to database
     await prisma.$connect();
-    console.log('Connected to database');
+    log.info('Database connection established');
 
     // Register API routes
     registerRoutes(fastify, prisma, schedulerService);
+    log.debug('API routes registered');
 
     // Start the scheduler
     schedulerService.start(config.speedtestCron);
 
     // Optionally run speedtest on startup
     if (config.runOnStartup) {
-      console.log('Running initial speedtest...');
+      log.info('Triggering initial speedtest on startup');
       // Run in background, don't block startup
       schedulerService.triggerManual().catch(err => {
-        console.error('Initial speedtest failed:', err);
+        log.error('Initial speedtest failed', err);
       });
     }
 
     // Start server
     await fastify.listen({ port: config.port, host: config.host });
-    console.log(`Server running at http://${config.host}:${config.port}`);
+    log.info(`Server started successfully`, {
+      url: `http://${config.host}:${config.port}`,
+      environment: process.env.NODE_ENV || 'development'
+    });
 
   } catch (err) {
-    fastify.log.error(err);
+    log.error('Failed to start server', err);
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 const shutdown = async () => {
-  console.log('Shutting down...');
+  log.info('Shutdown signal received, stopping services...');
   schedulerService.stop();
   await prisma.$disconnect();
+  log.info('Database connection closed');
   await fastify.close();
+  log.info('Server shutdown complete');
   process.exit(0);
 };
 

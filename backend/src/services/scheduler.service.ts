@@ -1,11 +1,16 @@
 import cron from 'node-cron';
 import type { SpeedtestService } from './speedtest.service.js';
+import { Logger } from '../utils/logger.js';
 
 export class SchedulerService {
   private task: cron.ScheduledTask | null = null;
   private isRunning = false;
+  private log: Logger;
+  private runCount = 0;
 
-  constructor(private speedtestService: SpeedtestService) {}
+  constructor(private speedtestService: SpeedtestService) {
+    this.log = new Logger('SchedulerService');
+  }
 
   /**
    * Start the scheduler with the given cron expression
@@ -13,27 +18,37 @@ export class SchedulerService {
    */
   start(cronExpression: string = '*/5 * * * *'): void {
     if (this.task) {
-      console.log('Scheduler already running');
+      this.log.warn('Scheduler already running, ignoring start request');
       return;
     }
 
-    console.log(`Starting scheduler with cron: ${cronExpression}`);
+    this.log.info('Initializing scheduler', { cronExpression });
 
     this.task = cron.schedule(cronExpression, async () => {
       if (this.isRunning) {
-        console.log('Previous speedtest still running, skipping this iteration');
+        this.log.warn('Previous speedtest still running, skipping this scheduled run');
         return;
       }
 
+      this.runCount++;
+      this.log.info(`Scheduled speedtest triggered`, { runNumber: this.runCount });
+
       this.isRunning = true;
       try {
-        await this.speedtestService.runAndSave();
+        const result = await this.speedtestService.runAndSave();
+        if (result.success) {
+          this.log.info('Scheduled speedtest completed successfully', { resultId: result.resultId });
+        } else {
+          this.log.warn('Scheduled speedtest completed with error', { error: result.error });
+        }
+      } catch (error) {
+        this.log.error('Scheduled speedtest failed unexpectedly', error);
       } finally {
         this.isRunning = false;
       }
     });
 
-    console.log('Scheduler started successfully');
+    this.log.info('Scheduler started successfully');
   }
 
   /**
@@ -43,7 +58,7 @@ export class SchedulerService {
     if (this.task) {
       this.task.stop();
       this.task = null;
-      console.log('Scheduler stopped');
+      this.log.info('Scheduler stopped', { totalRuns: this.runCount });
     }
   }
 
@@ -59,12 +74,24 @@ export class SchedulerService {
    */
   async triggerManual(): Promise<{ success: boolean; resultId?: number; error?: string }> {
     if (this.isRunning) {
+      this.log.warn('Manual trigger rejected - speedtest already running');
       return { success: false, error: 'A speedtest is already running' };
     }
 
+    this.log.info('Manual speedtest triggered');
     this.isRunning = true;
+
     try {
-      return await this.speedtestService.runAndSave();
+      const result = await this.speedtestService.runAndSave();
+      if (result.success) {
+        this.log.info('Manual speedtest completed successfully', { resultId: result.resultId });
+      } else {
+        this.log.warn('Manual speedtest completed with error', { error: result.error });
+      }
+      return result;
+    } catch (error) {
+      this.log.error('Manual speedtest failed unexpectedly', error);
+      throw error;
     } finally {
       this.isRunning = false;
     }

@@ -15,7 +15,7 @@ import {
 import { formatMbps, formatMs } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { RefreshCw, ChevronLeft, ChevronRight, Trash2, ExternalLink } from 'lucide-react';
+import { RefreshCw, ChevronLeft, ChevronRight, Trash2, ExternalLink, Download, FileJson } from 'lucide-react';
 
 export const Route = createFileRoute('/history')({
   component: History,
@@ -25,7 +25,65 @@ function History() {
   const [results, setResults] = useState<SpeedtestResult[]>([]);
   const [pagination, setPagination] = useState({ total: 0, limit: 20, offset: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch all results for export
+      const allResults = await api.getResults({ limit: 10000 });
+      const data = allResults.data;
+
+      // Build CSV content
+      const headers = ['Zeitpunkt', 'Download (Mbps)', 'Upload (Mbps)', 'Ping (ms)', 'Jitter (ms)', 'Packet Loss (%)', 'Server', 'Standort', 'ISP', 'Externe IP', 'Status'];
+      const rows = data.map(r => [
+        format(new Date(r.timestamp), 'yyyy-MM-dd HH:mm:ss'),
+        r.download.mbps?.toFixed(2) ?? '',
+        r.upload.mbps?.toFixed(2) ?? '',
+        r.ping.latency?.toFixed(2) ?? '',
+        r.ping.jitter?.toFixed(2) ?? '',
+        r.packetLoss?.toFixed(2) ?? '',
+        r.server?.name ?? '',
+        r.server?.location ?? '',
+        r.isp ?? '',
+        r.externalIp ?? '',
+        r.error ? 'Fehler' : 'OK'
+      ]);
+
+      const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+      downloadFile(csvContent, 'speedtest-export.csv', 'text/csv');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export fehlgeschlagen');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportToJSON = async () => {
+    setIsExporting(true);
+    try {
+      const allResults = await api.getResults({ limit: 10000 });
+      const jsonContent = JSON.stringify(allResults.data, null, 2);
+      downloadFile(jsonContent, 'speedtest-export.json', 'application/json');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export fehlgeschlagen');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const fetchData = async (offset: number = 0) => {
     try {
@@ -62,11 +120,23 @@ function History() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Verlauf</h1>
-        <p className="text-muted-foreground">
-          Alle Speedtest-Ergebnisse im Überblick
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Verlauf</h1>
+          <p className="text-muted-foreground">
+            Alle Speedtest-Ergebnisse im Überblick
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV} disabled={isExporting}>
+            <Download className="mr-2 h-4 w-4" />
+            CSV
+          </Button>
+          <Button variant="outline" onClick={exportToJSON} disabled={isExporting}>
+            <FileJson className="mr-2 h-4 w-4" />
+            JSON
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -123,7 +193,13 @@ function History() {
                       </TableCell>
                       <TableCell>
                         {result.error ? (
-                          <Badge variant="destructive">Fehler</Badge>
+                          <Badge
+                            variant="destructive"
+                            title={result.error}
+                            className="cursor-help"
+                          >
+                            Fehler
+                          </Badge>
                         ) : (
                           <Badge variant="success">OK</Badge>
                         )}

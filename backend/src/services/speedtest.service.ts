@@ -2,18 +2,25 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { PrismaClient } from '@prisma/client';
 import type { SpeedtestCliResult, SpeedtestOutput } from '../types/speedtest.js';
+import { Logger } from '../utils/logger.js';
 
 const execAsync = promisify(exec);
 
 export class SpeedtestService {
-  constructor(private prisma: PrismaClient) {}
+  private log: Logger;
+
+  constructor(private prisma: PrismaClient) {
+    this.log = new Logger('SpeedtestService');
+  }
 
   /**
    * Run speedtest CLI and return parsed JSON result
    */
   async runSpeedtest(): Promise<SpeedtestOutput> {
+    const endTimer = this.log.startTimer('runSpeedtest');
+
     try {
-      console.log(`[${new Date().toISOString()}] Starting speedtest...`);
+      this.log.info('Executing speedtest CLI command');
 
       const { stdout, stderr } = await execAsync(
         'speedtest --format=json --accept-license --accept-gdpr',
@@ -21,20 +28,29 @@ export class SpeedtestService {
       );
 
       if (stderr) {
-        console.warn('Speedtest stderr:', stderr);
+        this.log.warn('Speedtest CLI stderr output', { stderr });
       }
 
       const result = JSON.parse(stdout) as SpeedtestOutput;
-      console.log(`[${new Date().toISOString()}] Speedtest completed successfully`);
 
+      if (result.type === 'result') {
+        this.log.info('Speedtest completed', {
+          download: `${(result.download.bandwidth * 8 / 1_000_000).toFixed(2)} Mbps`,
+          upload: `${(result.upload.bandwidth * 8 / 1_000_000).toFixed(2)} Mbps`,
+          ping: `${result.ping.latency.toFixed(2)} ms`,
+          server: result.server.name,
+        });
+      }
+
+      endTimer();
       return result;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[${new Date().toISOString()}] Speedtest failed:`, message);
+      this.log.error('Speedtest execution failed', error);
+      endTimer();
 
       return {
         type: 'error',
-        message: message
+        message: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -43,10 +59,11 @@ export class SpeedtestService {
    * Run speedtest and save result to database
    */
   async runAndSave(): Promise<{ success: boolean; resultId?: number; error?: string }> {
+    this.log.info('Starting speedtest run and save operation');
     const output = await this.runSpeedtest();
 
     if (output.type === 'error') {
-      // Save error result
+      this.log.warn('Saving error result to database', { error: output.message });
       const result = await this.prisma.speedtestResult.create({
         data: {
           timestamp: new Date(),
@@ -54,11 +71,13 @@ export class SpeedtestService {
         }
       });
 
+      this.log.info('Error result saved', { resultId: result.id });
       return { success: false, resultId: result.id, error: output.message };
     }
 
     // Get or create server
     const server = await this.getOrCreateServer(output);
+    this.log.debug('Server resolved', { serverId: server.id, serverName: server.name });
 
     // Save successful result
     const result = await this.prisma.speedtestResult.create({
@@ -82,7 +101,11 @@ export class SpeedtestService {
       }
     });
 
-    console.log(`[${new Date().toISOString()}] Result saved with ID: ${result.id}`);
+    this.log.info('Speedtest result saved successfully', {
+      resultId: result.id,
+      isp: output.isp,
+      externalIp: output.interface.externalIp
+    });
 
     return { success: true, resultId: result.id };
   }

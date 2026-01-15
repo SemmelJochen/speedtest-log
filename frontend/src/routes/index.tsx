@@ -32,21 +32,29 @@ export const Route = createFileRoute('/')({
   component: Dashboard,
 });
 
+const TIME_RANGES = [
+  { label: '24 Stunden', hours: 24 },
+  { label: '48 Stunden', hours: 48 },
+  { label: '7 Tage', hours: 168 },
+  { label: '30 Tage', hours: 720 },
+];
+
 function Dashboard() {
   const [latest, setLatest] = useState<SpeedtestResult | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
+  const [selectedTimeRange, setSelectedTimeRange] = useState(TIME_RANGES[0]);
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (hours: number = selectedTimeRange.hours) => {
     try {
       setError(null);
       const [latestRes, statsRes, hourlyRes] = await Promise.all([
         api.getLatestResult(),
         api.getStats(),
-        api.getHourlyStats({ hours: 24 }),
+        api.getHourlyStats({ hours }),
       ]);
       setLatest(latestRes.data);
       setStats(statsRes.data);
@@ -56,6 +64,11 @@ function Dashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTimeRangeChange = (range: typeof TIME_RANGES[0]) => {
+    setSelectedTimeRange(range);
+    fetchData(range.hours);
   };
 
   useEffect(() => {
@@ -86,11 +99,16 @@ function Dashboard() {
     );
   }
 
-  const chartData = hourlyData.map((d) => ({
-    time: format(new Date(d.hour), 'HH:mm', { locale: de }),
-    Download: d.download,
-    Upload: d.upload,
-  }));
+  const chartData = hourlyData.map((d) => {
+    const date = new Date(d.hour);
+    // For ranges > 48h, show date; otherwise just time
+    const timeFormat = selectedTimeRange.hours > 48 ? 'dd.MM HH:mm' : 'HH:mm';
+    return {
+      time: format(date, timeFormat, { locale: de }),
+      Download: d.download,
+      Upload: d.upload,
+    };
+  });
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -185,14 +203,30 @@ function Dashboard() {
         </Card>
       </div>
 
-      {/* 24h Chart */}
+      {/* Chart with Time Range Selector */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Letzte 24 Stunden
-          </CardTitle>
-          <CardDescription>Download und Upload Geschwindigkeiten</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Letzte {selectedTimeRange.label}
+              </CardTitle>
+              <CardDescription>Download und Upload Geschwindigkeiten ({hourlyData.length} Datenpunkte)</CardDescription>
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {TIME_RANGES.map((range) => (
+                <Button
+                  key={range.hours}
+                  variant={selectedTimeRange.hours === range.hours ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTimeRangeChange(range)}
+                >
+                  {range.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {chartData.length > 0 ? (
