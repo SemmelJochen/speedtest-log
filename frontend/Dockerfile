@@ -4,9 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # API URL is auto-detected at runtime from window.location.hostname
-# Only set VITE_API_URL if you need to override the auto-detection
-ARG VITE_API_URL=""
-ENV VITE_API_URL=$VITE_API_URL
+# No build-time configuration needed
 
 # Copy package files
 COPY package.json package-lock.json* ./

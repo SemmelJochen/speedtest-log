@@ -1,19 +1,7 @@
 // API base URL - automatically detect based on current hostname for LAN access
-function getApiBase(): string {
-  // If explicitly set via environment (non-empty), use that
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl && envUrl.trim() !== '') {
-    return envUrl;
-  }
-
-  // Auto-detect: use same hostname as frontend, but port 3001
-  // This allows LAN access without hardcoding IPs
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:3001`;
-}
-
-const API_BASE = getApiBase();
-console.log('API Base URL:', API_BASE); // Debug log
+// Always use the same hostname the user is accessing the frontend from
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:3001`;
+console.log('API Base URL:', API_BASE);
 
 export interface SpeedtestResult {
   id: number;
