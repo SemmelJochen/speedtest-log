@@ -121,9 +121,10 @@ export const api = {
     if (params?.offset) searchParams.set('offset', params.offset.toString());
 
     const query = searchParams.toString();
-    return fetchApi<{ data: SpeedtestResult[]; pagination: { total: number; limit: number; offset: number } }>(
-      `/api/results${query ? `?${query}` : ''}`
-    );
+    return fetchApi<{
+      data: SpeedtestResult[];
+      pagination: { total: number; limit: number; offset: number };
+    }>(`/api/results${query ? `?${query}` : ''}`);
   },
 
   getLatestResult: async () => {
@@ -182,8 +183,14 @@ export const api = {
 
   // Servers
   getServers: async () => {
-    return fetchApi<{ data: Array<{ id: number; serverId: number; name: string; location: string; country: string }> }>(
-      '/api/servers'
-    );
+    return fetchApi<{
+      data: Array<{
+        id: number;
+        serverId: number;
+        name: string;
+        location: string;
+        country: string;
+      }>;
+    }>('/api/servers');
   },
 };

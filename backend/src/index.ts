@@ -14,7 +14,7 @@ const speedtestService = new SpeedtestService(prisma);
 const schedulerService = new SchedulerService(speedtestService);
 
 const fastify = Fastify({
-  logger: true
+  logger: true,
 });
 
 async function main() {
@@ -22,12 +22,12 @@ async function main() {
     log.info('Starting Speedtest Logger API', {
       port: config.port,
       host: config.host,
-      cronSchedule: config.speedtestCron
+      cronSchedule: config.speedtestCron,
     });
 
     // Register CORS - allow all origins for network access
     await fastify.register(cors, {
-      origin: true,  // Allow all origins (required for LAN access)
+      origin: true, // Allow all origins (required for LAN access)
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -49,7 +49,7 @@ async function main() {
     if (config.runOnStartup) {
       log.info('Triggering initial speedtest on startup');
       // Run in background, don't block startup
-      schedulerService.triggerManual().catch(err => {
+      schedulerService.triggerManual().catch((err) => {
         log.error('Initial speedtest failed', err);
       });
     }
@@ -58,9 +58,8 @@ async function main() {
     await fastify.listen({ port: config.port, host: config.host });
     log.info(`Server started successfully`, {
       url: `http://${config.host}:${config.port}`,
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     });
-
   } catch (err) {
     log.error('Failed to start server', err);
     process.exit(1);

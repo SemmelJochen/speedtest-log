@@ -1,0 +1,18 @@
+node_modules
+dist
+.output
+build
+coverage
+*.min.js
+*.min.css
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated files
+backend/prisma/migrations
+frontend/src/routeTree.gen.ts
+
+# Docker
+Dockerfile
+docker-compose.yml

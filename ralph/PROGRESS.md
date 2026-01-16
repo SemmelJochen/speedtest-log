@@ -252,9 +252,111 @@ Der Docker Build-Fehler für das Backend wurde behoben. Das Problem war das pack
 
 ---
 
+### Iteration 5 - 2026-01-16 09:31
+
+#### Zusammenfassung
+Task 5 (CI/CD Pipeline) wurde vollständig implementiert. ESLint und Prettier wurden für Backend und Frontend konfiguriert, GitHub Actions Workflows für CI und automatisches Deployment wurden erstellt, und eine umfassende Deployment-Dokumentation wurde hinzugefügt.
+
+#### Änderungen
+
+##### 1. Prettier Konfiguration (Root)
+- **Was:** `.prettierrc` und `.prettierignore` im Root-Verzeichnis erstellt
+- **Warum:** Einheitliche Code-Formatierung für das gesamte Projekt
+- **Dateien:** `.prettierrc`, `.prettierignore`
+
+##### 2. ESLint Backend
+- **Was:** `eslint.config.js` mit TypeScript-ESLint Konfiguration erstellt
+- **Warum:** Statische Code-Analyse für TypeScript-Code im Backend
+- **Regeln:** no-unused-vars mit _ Prefix-Ignore, no-console (erlaubt: warn, error, info, debug)
+- **Dateien:** `backend/eslint.config.js`, `backend/package.json`
+
+##### 3. ESLint Frontend
+- **Was:** `eslint.config.js` mit React-Hooks und React-Refresh Plugins erstellt
+- **Warum:** React-spezifische Linting-Regeln (Hook-Dependencies, Fast Refresh)
+- **Dateien:** `frontend/eslint.config.js`, `frontend/package.json`
+
+##### 4. NPM Scripts (Backend)
+- **Was:** `lint`, `lint:fix`, `format`, `format:check`, `typecheck` Scripts hinzugefügt
+- **Warum:** Konsistente Befehle für lokale Entwicklung und CI
+- **Dateien:** `backend/package.json`
+
+##### 5. NPM Scripts (Frontend)
+- **Was:** `lint`, `lint:fix`, `format`, `format:check`, `typecheck` Scripts hinzugefügt
+- **Warum:** Konsistente Befehle für lokale Entwicklung und CI
+- **Dateien:** `frontend/package.json`
+
+##### 6. Lint-Fehler behoben
+- **Was:** `prefer-const` und unused variable Fehler in Backend behoben
+- **Warum:** CI würde sonst fehlschlagen
+- **Dateien:** `backend/src/routes/stats.routes.ts`, `backend/src/utils/logger.ts`
+
+##### 7. GitHub Actions CI Workflow
+- **Was:** `.github/workflows/ci.yml` erstellt
+- **Warum:** Automatische Validierung bei Push und Pull Requests
+- **Jobs:**
+  - Backend CI: format:check, lint, typecheck, build
+  - Frontend CI: format:check, lint, typecheck, build
+  - Docker Build: Testet Docker Images
+- **Dateien:** `.github/workflows/ci.yml`
+
+##### 8. GitHub Actions Deploy Workflow
+- **Was:** `.github/workflows/deploy.yml` erstellt
+- **Warum:** Automatisches Deployment zur NAS
+- **Features:**
+  - Multi-Arch Images (amd64, arm64) für NAS-Kompatibilität
+  - Push zu GitHub Container Registry (ghcr.io)
+  - SSH-basiertes Deployment (Option A)
+  - Self-hosted Runner Deployment (Option B)
+- **Dateien:** `.github/workflows/deploy.yml`
+
+##### 9. Deployment Dokumentation
+- **Was:** `DEPLOYMENT.md` mit vollständiger Anleitung erstellt
+- **Warum:** Anleitung für NAS-Deployment
+- **Inhalt:**
+  - CI/CD Pipeline Übersicht
+  - Self-hosted Runner Setup
+  - SSH Deployment Setup
+  - Watchtower Alternative
+  - Manuelles Deployment
+  - Environment Variablen Referenz
+- **Dateien:** `DEPLOYMENT.md`
+
+#### Verifizierung
+- ✅ Backend lint: Erfolgreich (0 Fehler, 0 Warnungen)
+- ✅ Backend format:check: Alle Dateien korrekt formatiert
+- ✅ Backend build: Erfolgreich
+- ✅ Frontend lint: Erfolgreich (0 Fehler, 5 Warnungen - akzeptabel)
+- ✅ Frontend format:check: Alle Dateien korrekt formatiert
+- ✅ Frontend build: Erfolgreich (713KB Bundle)
+
+#### Task Status
+- [x] Task 1: Strategisches Vorgehen - abgeschlossen (Iteration 1)
+- [x] Task 2.1: Backend & Datenbank - abgeschlossen (Iteration 1)
+- [x] Task 2.2: RESTful API - abgeschlossen (Iteration 1)
+- [x] Task 3.1: Frontend Architektur - abgeschlossen (Iteration 2)
+- [x] Task 3.2: Dashboard Visualisierungen - abgeschlossen (Iteration 2)
+- [x] Task 4: Docker Infrastruktur - abgeschlossen (Iteration 2-4)
+- [x] Task 5: CI/CD Pipeline - abgeschlossen (Iteration 5)
+
+#### Erkenntnisse
+- ESLint v9 verwendet das neue Flat Config Format (`eslint.config.js`)
+- shadcn/ui Komponenten exportieren auch Varianten, was react-refresh Warnungen auslöst - akzeptabel
+- Multi-Arch Docker Builds ermöglichen Deployment auf verschiedene NAS-Architekturen
+
+---
+
 ## Status: ALLE TASKS ABGESCHLOSSEN
 
-ANWENDUNG IST FERTIG und kompiliert
+CI läuft
+
+### Vollständige Feature-Liste
+1. **Speedtest Logging:** Automatische Tests alle 5 Minuten (konfigurierbar)
+2. **PostgreSQL Datenbank:** Normalisiertes Schema mit Server-Relationen
+3. **RESTful API:** CRUD Operations, Statistiken, Export
+4. **React Dashboard:** 4 Views (Dashboard, Verlauf, Analyse, Server)
+5. **Datenvisualisierung:** Area Charts, Line Charts, Bar Charts
+6. **Docker Compose:** 3 Services (postgres, backend, frontend)
+7. **CI/CD Pipeline:** GitHub Actions mit Lint, Format, Build, Deploy
 
 ### Verwendung
 ```bash
@@ -266,8 +368,17 @@ docker-compose logs -f
 
 # Stoppen
 docker-compose down
+
+# Lokale Entwicklung
+cd backend && npm run lint && npm run build
+cd frontend && npm run lint && npm run build
 ```
 
 ### URLs
 - **Frontend**: http://localhost:3000
 - **API**: http://localhost:3001
+
+### CI/CD
+- CI läuft bei jedem Push/PR auf `main`
+- Deploy-Workflow verfügbar für automatisches NAS-Deployment
+- Siehe `DEPLOYMENT.md` für Setup-Anleitung

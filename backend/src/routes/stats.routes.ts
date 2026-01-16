@@ -8,12 +8,12 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
     Querystring: {
       from?: string;
       to?: string;
-    }
+    };
   }>('/api/stats', async (request) => {
     const { from, to } = request.query;
 
     const where: { timestamp?: { gte?: Date; lte?: Date }; error?: null } = {
-      error: null // Only successful tests
+      error: null, // Only successful tests
     };
 
     if (from || to) {
@@ -29,8 +29,8 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
         downloadBandwidth: true,
         uploadBandwidth: true,
         pingLatency: true,
-        packetLoss: true
-      }
+        packetLoss: true,
+      },
     });
 
     if (results.length === 0) {
@@ -40,31 +40,31 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
           download: null,
           upload: null,
           ping: null,
-          packetLoss: null
-        }
+          packetLoss: null,
+        },
       };
     }
 
     // Calculate statistics
     const downloads = results
-      .map(r => r.downloadBandwidth)
+      .map((r) => r.downloadBandwidth)
       .filter((v): v is bigint => v !== null)
-      .map(v => Number(v));
+      .map((v) => Number(v));
 
     const uploads = results
-      .map(r => r.uploadBandwidth)
+      .map((r) => r.uploadBandwidth)
       .filter((v): v is bigint => v !== null)
-      .map(v => Number(v));
+      .map((v) => Number(v));
 
     const pings = results
-      .map(r => r.pingLatency)
+      .map((r) => r.pingLatency)
       .filter((v): v is NonNullable<typeof v> => v !== null)
-      .map(v => Number(v));
+      .map((v) => Number(v));
 
     const packetLosses = results
-      .map(r => r.packetLoss)
+      .map((r) => r.packetLoss)
       .filter((v): v is NonNullable<typeof v> => v !== null)
-      .map(v => Number(v));
+      .map((v) => Number(v));
 
     const calcStats = (values: number[]) => {
       if (values.length === 0) return null;
@@ -80,7 +80,7 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
         max: sorted[sorted.length - 1],
         p5: sorted[p5Index],
         p95: sorted[p95Index],
-        median: sorted[Math.floor(sorted.length / 2)]
+        median: sorted[Math.floor(sorted.length / 2)],
       };
     };
 
@@ -90,25 +90,29 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
     return {
       data: {
         count: results.length,
-        download: downloadStats ? {
-          avg: bytesToMbps(downloadStats.avg),
-          min: bytesToMbps(downloadStats.min),
-          max: bytesToMbps(downloadStats.max),
-          p5: bytesToMbps(downloadStats.p5),
-          p95: bytesToMbps(downloadStats.p95),
-          median: bytesToMbps(downloadStats.median)
-        } : null,
-        upload: uploadStats ? {
-          avg: bytesToMbps(uploadStats.avg),
-          min: bytesToMbps(uploadStats.min),
-          max: bytesToMbps(uploadStats.max),
-          p5: bytesToMbps(uploadStats.p5),
-          p95: bytesToMbps(uploadStats.p95),
-          median: bytesToMbps(uploadStats.median)
-        } : null,
+        download: downloadStats
+          ? {
+              avg: bytesToMbps(downloadStats.avg),
+              min: bytesToMbps(downloadStats.min),
+              max: bytesToMbps(downloadStats.max),
+              p5: bytesToMbps(downloadStats.p5),
+              p95: bytesToMbps(downloadStats.p95),
+              median: bytesToMbps(downloadStats.median),
+            }
+          : null,
+        upload: uploadStats
+          ? {
+              avg: bytesToMbps(uploadStats.avg),
+              min: bytesToMbps(uploadStats.min),
+              max: bytesToMbps(uploadStats.max),
+              p5: bytesToMbps(uploadStats.p5),
+              p95: bytesToMbps(uploadStats.p95),
+              median: bytesToMbps(uploadStats.median),
+            }
+          : null,
         ping: calcStats(pings),
-        packetLoss: calcStats(packetLosses)
-      }
+        packetLoss: calcStats(packetLosses),
+      },
     };
   });
 
@@ -118,12 +122,11 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
       from?: string;
       to?: string;
       hours?: string;
-    }
+    };
   }>('/api/stats/hourly', async (request) => {
     const { from, to, hours = '24' } = request.query;
 
     let startDate: Date;
-    let endDate: Date;
 
     if (from) {
       startDate = new Date(from);
@@ -132,16 +135,18 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
       startDate.setHours(startDate.getHours() - parseInt(hours, 10));
     }
 
-    endDate = to ? new Date(to) : new Date();
+    const endDate = to ? new Date(to) : new Date();
 
     // Raw query for hourly grouping
-    const hourlyData = await prisma.$queryRaw<Array<{
-      hour: Date;
-      avg_download: bigint | null;
-      avg_upload: bigint | null;
-      avg_ping: number | null;
-      count: bigint;
-    }>>`
+    const hourlyData = await prisma.$queryRaw<
+      Array<{
+        hour: Date;
+        avg_download: bigint | null;
+        avg_upload: bigint | null;
+        avg_ping: number | null;
+        count: bigint;
+      }>
+    >`
       SELECT
         date_trunc('hour', timestamp) as hour,
         AVG(download_bandwidth)::bigint as avg_download,
@@ -157,13 +162,13 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
     `;
 
     return {
-      data: hourlyData.map(row => ({
+      data: hourlyData.map((row) => ({
         hour: row.hour,
         download: row.avg_download ? bytesToMbps(Number(row.avg_download)) : null,
         upload: row.avg_upload ? bytesToMbps(Number(row.avg_upload)) : null,
         ping: row.avg_ping ? Number(row.avg_ping.toFixed(2)) : null,
-        count: Number(row.count)
-      }))
+        count: Number(row.count),
+      })),
     };
   });
 
@@ -173,12 +178,11 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
       from?: string;
       to?: string;
       days?: string;
-    }
+    };
   }>('/api/stats/daily', async (request) => {
     const { from, to, days = '30' } = request.query;
 
     let startDate: Date;
-    let endDate: Date;
 
     if (from) {
       startDate = new Date(from);
@@ -187,18 +191,20 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
       startDate.setDate(startDate.getDate() - parseInt(days, 10));
     }
 
-    endDate = to ? new Date(to) : new Date();
+    const endDate = to ? new Date(to) : new Date();
 
     // Raw query for daily grouping
-    const dailyData = await prisma.$queryRaw<Array<{
-      day: Date;
-      avg_download: bigint | null;
-      avg_upload: bigint | null;
-      avg_ping: number | null;
-      min_download: bigint | null;
-      max_download: bigint | null;
-      count: bigint;
-    }>>`
+    const dailyData = await prisma.$queryRaw<
+      Array<{
+        day: Date;
+        avg_download: bigint | null;
+        avg_upload: bigint | null;
+        avg_ping: number | null;
+        min_download: bigint | null;
+        max_download: bigint | null;
+        count: bigint;
+      }>
+    >`
       SELECT
         date_trunc('day', timestamp) as day,
         AVG(download_bandwidth)::bigint as avg_download,
@@ -216,17 +222,17 @@ export function registerStatsRoutes(fastify: FastifyInstance, prisma: PrismaClie
     `;
 
     return {
-      data: dailyData.map(row => ({
+      data: dailyData.map((row) => ({
         day: row.day,
         download: {
           avg: row.avg_download ? bytesToMbps(Number(row.avg_download)) : null,
           min: row.min_download ? bytesToMbps(Number(row.min_download)) : null,
-          max: row.max_download ? bytesToMbps(Number(row.max_download)) : null
+          max: row.max_download ? bytesToMbps(Number(row.max_download)) : null,
         },
         upload: row.avg_upload ? bytesToMbps(Number(row.avg_upload)) : null,
         ping: row.avg_ping ? Number(row.avg_ping.toFixed(2)) : null,
-        count: Number(row.count)
-      }))
+        count: Number(row.count),
+      })),
     };
   });
 }

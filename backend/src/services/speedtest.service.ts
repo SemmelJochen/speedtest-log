@@ -35,8 +35,8 @@ export class SpeedtestService {
 
       if (result.type === 'result') {
         this.log.info('Speedtest completed', {
-          download: `${(result.download.bandwidth * 8 / 1_000_000).toFixed(2)} Mbps`,
-          upload: `${(result.upload.bandwidth * 8 / 1_000_000).toFixed(2)} Mbps`,
+          download: `${((result.download.bandwidth * 8) / 1_000_000).toFixed(2)} Mbps`,
+          upload: `${((result.upload.bandwidth * 8) / 1_000_000).toFixed(2)} Mbps`,
           ping: `${result.ping.latency.toFixed(2)} ms`,
           server: result.server.name,
         });
@@ -50,7 +50,7 @@ export class SpeedtestService {
 
       return {
         type: 'error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -67,8 +67,8 @@ export class SpeedtestService {
       const result = await this.prisma.speedtestResult.create({
         data: {
           timestamp: new Date(),
-          error: output.message
-        }
+          error: output.message,
+        },
       });
 
       this.log.info('Error result saved', { resultId: result.id });
@@ -97,14 +97,14 @@ export class SpeedtestService {
         isp: output.isp,
         externalIp: output.interface.externalIp,
         serverId: server.id,
-        resultUrl: output.result.url
-      }
+        resultUrl: output.result.url,
+      },
     });
 
     this.log.info('Speedtest result saved successfully', {
       resultId: result.id,
       isp: output.isp,
-      externalIp: output.interface.externalIp
+      externalIp: output.interface.externalIp,
     });
 
     return { success: true, resultId: result.id };
@@ -115,7 +115,7 @@ export class SpeedtestService {
    */
   private async getOrCreateServer(result: SpeedtestCliResult) {
     const existingServer = await this.prisma.speedtestServer.findUnique({
-      where: { serverId: result.server.id }
+      where: { serverId: result.server.id },
     });
 
     if (existingServer) {
@@ -128,8 +128,8 @@ export class SpeedtestService {
         name: result.server.name,
         location: result.server.location,
         country: result.server.country,
-        host: result.server.host
-      }
+        host: result.server.host,
+      },
     });
   }
 }

@@ -15,7 +15,15 @@ import {
 import { formatMbps, formatMs } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { RefreshCw, ChevronLeft, ChevronRight, Trash2, ExternalLink, Download, FileJson } from 'lucide-react';
+import {
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  ExternalLink,
+  Download,
+  FileJson,
+} from 'lucide-react';
 
 export const Route = createFileRoute('/history')({
   component: History,
@@ -36,8 +44,20 @@ function History() {
       const data = allResults.data;
 
       // Build CSV content
-      const headers = ['Zeitpunkt', 'Download (Mbps)', 'Upload (Mbps)', 'Ping (ms)', 'Jitter (ms)', 'Packet Loss (%)', 'Server', 'Standort', 'ISP', 'Externe IP', 'Status'];
-      const rows = data.map(r => [
+      const headers = [
+        'Zeitpunkt',
+        'Download (Mbps)',
+        'Upload (Mbps)',
+        'Ping (ms)',
+        'Jitter (ms)',
+        'Packet Loss (%)',
+        'Server',
+        'Standort',
+        'ISP',
+        'Externe IP',
+        'Status',
+      ];
+      const rows = data.map((r) => [
         format(new Date(r.timestamp), 'yyyy-MM-dd HH:mm:ss'),
         r.download.mbps?.toFixed(2) ?? '',
         r.upload.mbps?.toFixed(2) ?? '',
@@ -48,10 +68,12 @@ function History() {
         r.server?.location ?? '',
         r.isp ?? '',
         r.externalIp ?? '',
-        r.error ? 'Fehler' : 'OK'
+        r.error ? 'Fehler' : 'OK',
       ]);
 
-      const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+      const csvContent = [headers, ...rows]
+        .map((row) => row.map((cell) => `"${cell}"`).join(','))
+        .join('\n');
       downloadFile(csvContent, 'speedtest-export.csv', 'text/csv');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export fehlgeschlagen');
@@ -123,9 +145,7 @@ function History() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Verlauf</h1>
-          <p className="text-muted-foreground">
-            Alle Speedtest-Ergebnisse im Überblick
-          </p>
+          <p className="text-muted-foreground">Alle Speedtest-Ergebnisse im Überblick</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportToCSV} disabled={isExporting}>
@@ -148,9 +168,7 @@ function History() {
       <Card>
         <CardHeader>
           <CardTitle>Speedtest-Ergebnisse</CardTitle>
-          <CardDescription>
-            {pagination.total} Tests insgesamt
-          </CardDescription>
+          <CardDescription>{pagination.total} Tests insgesamt</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -158,9 +176,7 @@ function History() {
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : results.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Keine Ergebnisse vorhanden
-            </div>
+            <div className="text-center py-8 text-muted-foreground">Keine Ergebnisse vorhanden</div>
           ) : (
             <>
               <Table>
@@ -179,7 +195,7 @@ function History() {
                   {results.map((result) => (
                     <TableRow key={result.id}>
                       <TableCell>
-                        {format(new Date(result.timestamp), "dd.MM.yy HH:mm", {
+                        {format(new Date(result.timestamp), 'dd.MM.yy HH:mm', {
                           locale: de,
                         })}
                       </TableCell>
@@ -193,11 +209,7 @@ function History() {
                       </TableCell>
                       <TableCell>
                         {result.error ? (
-                          <Badge
-                            variant="destructive"
-                            title={result.error}
-                            className="cursor-help"
-                          >
+                          <Badge variant="destructive" title={result.error} className="cursor-help">
                             Fehler
                           </Badge>
                         ) : (
@@ -207,11 +219,7 @@ function History() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {result.resultUrl && (
-                            <a
-                              href={result.resultUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
+                            <a href={result.resultUrl} target="_blank" rel="noopener noreferrer">
                               <Button variant="ghost" size="icon">
                                 <ExternalLink className="h-4 w-4" />
                               </Button>

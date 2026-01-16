@@ -1,12 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  History,
-  BarChart3,
-  Wifi,
-  Server,
-} from 'lucide-react';
+import { LayoutDashboard, History, BarChart3, Wifi, Server } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -62,9 +56,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t">
-        <p className="text-xs text-muted-foreground text-center">
-          Speedtest Logger v1.0
-        </p>
+        <p className="text-xs text-muted-foreground text-center">Speedtest Logger v1.0</p>
       </div>
     </aside>
   );
@@ -86,9 +78,7 @@ export function MobileNav() {
                 to={item.href}
                 className={cn(
                   'flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-xs font-medium transition-colors',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground'
+                  isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 <Icon className="h-5 w-5" />

@@ -21,3 +21,6 @@ Mach dir gedanken welche Visualisierungen interessant sein könnten für die vis
 
 ### Task 4 Infrastruktur
 Erstelle eine docker-compose mit den notwendigen services für die Infrastruktur.
+
+### Task 5 CI/CD Pipeline
+Ich möchte dass du eine CI CD Pipeline anlegst welche linting, prettier und build checkt - mach dir auch gedanken wie ich es einfach und sinnvoll hinbekomme, theoretisch automatische Deployments auf der NAS zu machen

@@ -37,7 +37,9 @@ export class SchedulerService {
       try {
         const result = await this.speedtestService.runAndSave();
         if (result.success) {
-          this.log.info('Scheduled speedtest completed successfully', { resultId: result.resultId });
+          this.log.info('Scheduled speedtest completed successfully', {
+            resultId: result.resultId,
+          });
         } else {
           this.log.warn('Scheduled speedtest completed with error', { error: result.error });
         }

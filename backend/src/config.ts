@@ -15,5 +15,5 @@ export const config = {
   // Database URL (handled by Prisma via DATABASE_URL env)
 
   // CORS
-  corsOrigin: process.env.CORS_ORIGIN || '*'
+  corsOrigin: process.env.CORS_ORIGIN || '*',
 };

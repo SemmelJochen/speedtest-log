@@ -7,10 +7,10 @@ interface LogContext {
 }
 
 const LOG_COLORS = {
-  DEBUG: '\x1b[90m',  // Gray
-  INFO: '\x1b[36m',   // Cyan
-  WARN: '\x1b[33m',   // Yellow
-  ERROR: '\x1b[31m',  // Red
+  DEBUG: '\x1b[90m', // Gray
+  INFO: '\x1b[36m', // Cyan
+  WARN: '\x1b[33m', // Yellow
+  ERROR: '\x1b[31m', // Red
   RESET: '\x1b[0m',
 };
 
@@ -34,7 +34,7 @@ class Logger {
     let formatted = `${color}[${timestamp}] [${level}] [${service}]${reset} ${message}`;
 
     if (context) {
-      const { service: _, operation, ...rest } = context;
+      const { service: _service, operation, ...rest } = context;
       if (operation) {
         formatted += ` (${operation})`;
       }

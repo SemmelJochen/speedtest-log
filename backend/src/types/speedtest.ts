@@ -88,5 +88,5 @@ export interface SpeedtestResultFormatted {
 export function bytesToMbps(bytesPerSecond: bigint | number | null): number | null {
   if (bytesPerSecond === null) return null;
   const bytes = typeof bytesPerSecond === 'bigint' ? Number(bytesPerSecond) : bytesPerSecond;
-  return Number((bytes * 8 / 1_000_000).toFixed(2));
+  return Number(((bytes * 8) / 1_000_000).toFixed(2));
 }

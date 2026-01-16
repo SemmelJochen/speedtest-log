@@ -19,7 +19,7 @@ export function registerSpeedtestRoutes(fastify: FastifyInstance, scheduler: Sch
     return {
       success: true,
       resultId: result.resultId,
-      message: 'Speedtest completed successfully'
+      message: 'Speedtest completed successfully',
     };
   });
 
@@ -27,7 +27,7 @@ export function registerSpeedtestRoutes(fastify: FastifyInstance, scheduler: Sch
   fastify.get('/api/speedtest/status', async () => {
     return {
       schedulerActive: scheduler.isActive(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   });
 }

@@ -54,23 +54,24 @@ function Servers() {
   }
 
   // Group servers by country
-  const serversByCountry = servers.reduce((acc, server) => {
-    const country = server.country || 'Unbekannt';
-    if (!acc[country]) {
-      acc[country] = [];
-    }
-    acc[country].push(server);
-    return acc;
-  }, {} as Record<string, ServerInfo[]>);
+  const serversByCountry = servers.reduce(
+    (acc, server) => {
+      const country = server.country || 'Unbekannt';
+      if (!acc[country]) {
+        acc[country] = [];
+      }
+      acc[country].push(server);
+      return acc;
+    },
+    {} as Record<string, ServerInfo[]>
+  );
 
   return (
     <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Server</h1>
-        <p className="text-muted-foreground">
-          Verwendete Speedtest-Server im Überblick
-        </p>
+        <p className="text-muted-foreground">Verwendete Speedtest-Server im Überblick</p>
       </div>
 
       {error && (
@@ -88,9 +89,7 @@ function Servers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{servers.length}</div>
-            <p className="text-xs text-muted-foreground">
-              verschiedene Server verwendet
-            </p>
+            <p className="text-xs text-muted-foreground">verschiedene Server verwendet</p>
           </CardContent>
         </Card>
 
@@ -101,9 +100,7 @@ function Servers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Object.keys(serversByCountry).length}</div>
-            <p className="text-xs text-muted-foreground">
-              verschiedene Länder
-            </p>
+            <p className="text-xs text-muted-foreground">verschiedene Länder</p>
           </CardContent>
         </Card>
 
@@ -113,12 +110,8 @@ function Servers() {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(servers.map(s => s.location)).size}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              verschiedene Standorte
-            </p>
+            <div className="text-2xl font-bold">{new Set(servers.map((s) => s.location)).size}</div>
+            <p className="text-xs text-muted-foreground">verschiedene Standorte</p>
           </CardContent>
         </Card>
       </div>
@@ -127,9 +120,7 @@ function Servers() {
       <Card>
         <CardHeader>
           <CardTitle>Alle Server</CardTitle>
-          <CardDescription>
-            Server, die bei Speedtests verwendet wurden
-          </CardDescription>
+          <CardDescription>Server, die bei Speedtests verwendet wurden</CardDescription>
         </CardHeader>
         <CardContent>
           {servers.length === 0 ? (
@@ -149,12 +140,8 @@ function Servers() {
               <TableBody>
                 {servers.map((server) => (
                   <TableRow key={server.id}>
-                    <TableCell className="font-mono text-sm">
-                      {server.serverId}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {server.name || '—'}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm">{server.serverId}</TableCell>
+                    <TableCell className="font-medium">{server.name || '—'}</TableCell>
                     <TableCell>{server.location || '—'}</TableCell>
                     <TableCell>{server.country || '—'}</TableCell>
                   </TableRow>
@@ -174,10 +161,7 @@ function Servers() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {Object.entries(serversByCountry).map(([country, countryServers]) => (
-                <div
-                  key={country}
-                  className="p-4 border rounded-lg"
-                >
+                <div key={country} className="p-4 border rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{country}</span>

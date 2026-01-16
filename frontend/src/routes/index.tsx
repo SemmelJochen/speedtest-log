@@ -66,7 +66,7 @@ function Dashboard() {
     }
   };
 
-  const handleTimeRangeChange = (range: typeof TIME_RANGES[0]) => {
+  const handleTimeRangeChange = (range: (typeof TIME_RANGES)[0]) => {
     setSelectedTimeRange(range);
     fetchData(range.hours);
   };
@@ -116,9 +116,7 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Aktuelle Geschwindigkeiten und Übersicht
-          </p>
+          <p className="text-muted-foreground">Aktuelle Geschwindigkeiten und Übersicht</p>
         </div>
         <Button onClick={handleRunSpeedtest} disabled={isRunning} size="lg">
           <RefreshCw className={`mr-2 h-4 w-4 ${isRunning ? 'animate-spin' : ''}`} />
@@ -140,9 +138,7 @@ function Dashboard() {
             <Download className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatMbps(latest?.download.mbps)}
-            </div>
+            <div className="text-2xl font-bold">{formatMbps(latest?.download.mbps)}</div>
             {stats?.download && (
               <p className="text-xs text-muted-foreground">
                 Durchschnitt: {formatMbps(stats.download.avg)}
@@ -157,9 +153,7 @@ function Dashboard() {
             <Upload className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatMbps(latest?.upload.mbps)}
-            </div>
+            <div className="text-2xl font-bold">{formatMbps(latest?.upload.mbps)}</div>
             {stats?.upload && (
               <p className="text-xs text-muted-foreground">
                 Durchschnitt: {formatMbps(stats.upload.avg)}
@@ -174,9 +168,7 @@ function Dashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatMs(latest?.ping.latency)}
-            </div>
+            <div className="text-2xl font-bold">{formatMs(latest?.ping.latency)}</div>
             {stats?.ping && (
               <p className="text-xs text-muted-foreground">
                 Durchschnitt: {formatMs(stats.ping.avg)}
@@ -196,9 +188,7 @@ function Dashboard() {
                 {latest?.error ? 'Fehler' : 'Online'}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {latest?.isp || 'Unbekannter ISP'}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{latest?.isp || 'Unbekannter ISP'}</p>
           </CardContent>
         </Card>
       </div>
@@ -212,7 +202,9 @@ function Dashboard() {
                 <Clock className="h-5 w-5" />
                 Letzte {selectedTimeRange.label}
               </CardTitle>
-              <CardDescription>Download und Upload Geschwindigkeiten ({hourlyData.length} Datenpunkte)</CardDescription>
+              <CardDescription>
+                Download und Upload Geschwindigkeiten ({hourlyData.length} Datenpunkte)
+              </CardDescription>
             </div>
             <div className="flex gap-1 flex-wrap">
               {TIME_RANGES.map((range) => (
@@ -346,9 +338,7 @@ function Dashboard() {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <span className="text-sm text-muted-foreground">Server</span>
-                <p className="font-medium">
-                  {latest.server?.name || 'Unbekannt'}
-                </p>
+                <p className="font-medium">{latest.server?.name || 'Unbekannt'}</p>
                 <p className="text-sm text-muted-foreground">
                   {latest.server?.location}, {latest.server?.country}
                 </p>

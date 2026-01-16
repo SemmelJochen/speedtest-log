@@ -21,13 +21,7 @@ import {
 import { formatMbps, formatMs } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import {
-  RefreshCw,
-  BarChart3,
-  TrendingUp,
-  Activity,
-  Calendar,
-} from 'lucide-react';
+import { RefreshCw, BarChart3, TrendingUp, Activity, Calendar } from 'lucide-react';
 
 export const Route = createFileRoute('/analytics')({
   component: Analytics,
@@ -103,9 +97,7 @@ function Analytics() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Analyse</h1>
-        <p className="text-muted-foreground">
-          Detaillierte Statistiken und Trends
-        </p>
+        <p className="text-muted-foreground">Detaillierte Statistiken und Trends</p>
       </div>
 
       {/* Time Range Selector */}
@@ -148,9 +140,7 @@ function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.count}</div>
-              <p className="text-xs text-muted-foreground">
-                im gewählten Zeitraum
-              </p>
+              <p className="text-xs text-muted-foreground">im gewählten Zeitraum</p>
             </CardContent>
           </Card>
           <Card>
@@ -158,9 +148,7 @@ function Analytics() {
               <CardTitle className="text-sm font-medium">Ø Download</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {formatMbps(stats.download?.avg)}
-              </div>
+              <div className="text-2xl font-bold">{formatMbps(stats.download?.avg)}</div>
               <p className="text-xs text-muted-foreground">
                 P95: {formatMbps(stats.download?.p95)}
               </p>
@@ -171,12 +159,8 @@ function Analytics() {
               <CardTitle className="text-sm font-medium">Ø Upload</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {formatMbps(stats.upload?.avg)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                P95: {formatMbps(stats.upload?.p95)}
-              </p>
+              <div className="text-2xl font-bold">{formatMbps(stats.upload?.avg)}</div>
+              <p className="text-xs text-muted-foreground">P95: {formatMbps(stats.upload?.p95)}</p>
             </CardContent>
           </Card>
           <Card>
@@ -185,9 +169,7 @@ function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatMs(stats.ping?.avg)}</div>
-              <p className="text-xs text-muted-foreground">
-                P95: {formatMs(stats.ping?.p95)}
-              </p>
+              <p className="text-xs text-muted-foreground">P95: {formatMs(stats.ping?.p95)}</p>
             </CardContent>
           </Card>
         </div>
@@ -251,10 +233,7 @@ function Analytics() {
                   className="text-xs"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 />
-                <YAxis
-                  className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                />
+                <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                 <Tooltip content={<ChartTooltipContent />} />
                 <Line
                   type="monotone"
@@ -330,9 +309,7 @@ function Analytics() {
               <Calendar className="h-5 w-5" />
               Perzentile Übersicht
             </CardTitle>
-            <CardDescription>
-              Statistische Verteilung der Messwerte
-            </CardDescription>
+            <CardDescription>Statistische Verteilung der Messwerte</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

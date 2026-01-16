@@ -13,29 +13,31 @@ function formatResult(result: ResultWithServer): SpeedtestResultFormatted {
       jitter: result.pingJitter ? Number(result.pingJitter) : null,
       latency: result.pingLatency ? Number(result.pingLatency) : null,
       low: result.pingLow ? Number(result.pingLow) : null,
-      high: result.pingHigh ? Number(result.pingHigh) : null
+      high: result.pingHigh ? Number(result.pingHigh) : null,
     },
     download: {
       mbps: bytesToMbps(result.downloadBandwidth),
       bytes: result.downloadBytes ? Number(result.downloadBytes) : null,
-      elapsed: result.downloadElapsed
+      elapsed: result.downloadElapsed,
     },
     upload: {
       mbps: bytesToMbps(result.uploadBandwidth),
       bytes: result.uploadBytes ? Number(result.uploadBytes) : null,
-      elapsed: result.uploadElapsed
+      elapsed: result.uploadElapsed,
     },
     packetLoss: result.packetLoss ? Number(result.packetLoss) : null,
     isp: result.isp,
     externalIp: result.externalIp,
-    server: result.server ? {
-      id: result.server.serverId,
-      name: result.server.name,
-      location: result.server.location,
-      country: result.server.country
-    } : null,
+    server: result.server
+      ? {
+          id: result.server.serverId,
+          name: result.server.name,
+          location: result.server.location,
+          country: result.server.country,
+        }
+      : null,
     resultUrl: result.resultUrl,
-    error: result.error
+    error: result.error,
   };
 }
 
@@ -47,7 +49,7 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
       to?: string;
       limit?: string;
       offset?: string;
-    }
+    };
   }>('/api/results', async (request) => {
     const { from, to, limit = '100', offset = '0' } = request.query;
 
@@ -65,9 +67,9 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
         include: { server: true },
         orderBy: { timestamp: 'desc' },
         take: parseInt(limit, 10),
-        skip: parseInt(offset, 10)
+        skip: parseInt(offset, 10),
       }),
-      prisma.speedtestResult.count({ where })
+      prisma.speedtestResult.count({ where }),
     ]);
 
     return {
@@ -75,8 +77,8 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
       pagination: {
         total,
         limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10)
-      }
+        offset: parseInt(offset, 10),
+      },
     };
   });
 
@@ -84,7 +86,7 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
   fastify.get('/api/results/latest', async () => {
     const result = await prisma.speedtestResult.findFirst({
       include: { server: true },
-      orderBy: { timestamp: 'desc' }
+      orderBy: { timestamp: 'desc' },
     });
 
     if (!result) {
@@ -96,13 +98,13 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
 
   // GET /api/results/:id - Get single result
   fastify.get<{
-    Params: { id: string }
+    Params: { id: string };
   }>('/api/results/:id', async (request, reply) => {
     const { id } = request.params;
 
     const result = await prisma.speedtestResult.findUnique({
       where: { id: parseInt(id, 10) },
-      include: { server: true }
+      include: { server: true },
     });
 
     if (!result) {
@@ -115,13 +117,13 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
 
   // DELETE /api/results/:id - Delete single result
   fastify.delete<{
-    Params: { id: string }
+    Params: { id: string };
   }>('/api/results/:id', async (request, reply) => {
     const { id } = request.params;
 
     try {
       await prisma.speedtestResult.delete({
-        where: { id: parseInt(id, 10) }
+        where: { id: parseInt(id, 10) },
       });
       return { success: true };
     } catch {
@@ -133,7 +135,7 @@ export function registerResultsRoutes(fastify: FastifyInstance, prisma: PrismaCl
   // GET /api/servers - List all servers
   fastify.get('/api/servers', async () => {
     const servers = await prisma.speedtestServer.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
 
     return { data: servers };
