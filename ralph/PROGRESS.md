@@ -345,6 +345,42 @@ Task 5 (CI/CD Pipeline) wurde vollständig implementiert. ESLint und Prettier wu
 
 ---
 
+### Iteration 6 - 2026-01-16 09:39
+
+#### Zusammenfassung
+CI-Fehler in GitHub Actions behoben. Der Prettier `format:check` schlug fehl, weil die automatisch generierte Datei `routeTree.gen.ts` nicht korrekt ignoriert wurde. Die `.prettierignore` im Root-Verzeichnis wurde nicht verwendet, da Prettier aus dem `frontend/`-Verzeichnis ausgeführt wird.
+
+#### Änderungen
+
+##### 1. Frontend .prettierignore erstellt
+- **Was:** Neue `.prettierignore` im `frontend/`-Verzeichnis erstellt
+- **Warum:** Prettier sucht standardmäßig im aktuellen Arbeitsverzeichnis nach `.prettierignore`. Da `npm run format:check` aus dem `frontend/`-Verzeichnis ausgeführt wird, wurde die Root-`.prettierignore` nicht gefunden. Die generierte `routeTree.gen.ts` Datei wurde daher nicht ignoriert.
+- **Dateien:** `frontend/.prettierignore`
+
+#### Verifizierung
+- ✅ Frontend format:check: Erfolgreich (alle Dateien korrekt formatiert)
+- ✅ Frontend lint: Erfolgreich (0 Fehler, 5 Warnungen - akzeptabel)
+- ✅ Frontend typecheck: Erfolgreich
+- ✅ Frontend build: Erfolgreich (713KB Bundle)
+- ✅ Backend format:check: Erfolgreich
+- ✅ Backend lint: Erfolgreich (keine Fehler/Warnungen)
+- ✅ Backend build: Erfolgreich
+
+#### Task Status
+- [x] Task 1: Strategisches Vorgehen - abgeschlossen (Iteration 1)
+- [x] Task 2.1: Backend & Datenbank - abgeschlossen (Iteration 1)
+- [x] Task 2.2: RESTful API - abgeschlossen (Iteration 1)
+- [x] Task 3.1: Frontend Architektur - abgeschlossen (Iteration 2)
+- [x] Task 3.2: Dashboard Visualisierungen - abgeschlossen (Iteration 2)
+- [x] Task 4: Docker Infrastruktur - abgeschlossen (Iteration 2-4)
+- [x] Task 5: CI/CD Pipeline - abgeschlossen (Iteration 5, korrigiert in Iteration 6)
+
+#### Erkenntnisse
+- Prettier `.prettierignore` muss im Arbeitsverzeichnis liegen, von dem aus der Befehl ausgeführt wird
+- Bei Monorepo-Strukturen mit separaten `frontend/` und `backend/` Verzeichnissen braucht jedes Verzeichnis seine eigene `.prettierignore`, wenn Prettier dort lokal ausgeführt wird
+
+---
+
 ## Status: ALLE TASKS ABGESCHLOSSEN
 
 CI läuft
