@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+ralph_logs/
+exports/
+
+# Development files
+CLAUDE.md
+*.md
+!README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Docker compose files (not needed in build)
+docker-compose*.yml
+
+# Dev script
+dev.sh

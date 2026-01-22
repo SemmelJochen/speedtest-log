@@ -88,6 +88,48 @@ export interface DailyData {
   count: number;
 }
 
+// TKG Threshold Types
+export interface ThresholdConfig {
+  id: number;
+  contractedDownload: number;
+  contractedUpload: number;
+  normalThreshold: number;
+  criticalThreshold: number;
+  updatedAt: string;
+}
+
+export type ThresholdStatus = 'good' | 'warning' | 'critical' | 'unknown';
+
+export interface ThresholdCheckResult {
+  status: ThresholdStatus;
+  downloadStatus: ThresholdStatus;
+  uploadStatus: ThresholdStatus;
+  downloadMbps: number;
+  uploadMbps: number;
+  downloadPercent: number;
+  uploadPercent: number;
+  contractedDownload: number;
+  contractedUpload: number;
+  thresholds: {
+    normal: number;
+    critical: number;
+  };
+}
+
+// Bundesnetzagentur Export Types
+export interface BundesnetzagenturExport {
+  id: number;
+  timestamp: string;
+  triggerReason: 'manual' | 'threshold_warning' | 'threshold_critical';
+  downloadMbps: number | null;
+  uploadMbps: number | null;
+  latencyMs: number | null;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  error: string | null;
+  hasZip: boolean;
+  createdAt: string;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // Only set Content-Type for requests with a body
   const headers: Record<string, string> = {
@@ -192,5 +234,71 @@ export const api = {
         country: string;
       }>;
     }>('/api/servers');
+  },
+
+  // TKG Threshold
+  getThresholdConfig: async () => {
+    return fetchApi<{ data: ThresholdConfig }>('/api/threshold/config');
+  },
+
+  updateThresholdConfig: async (config: Partial<Omit<ThresholdConfig, 'id' | 'updatedAt'>>) => {
+    return fetchApi<{ data: ThresholdConfig }>('/api/threshold/config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+  },
+
+  getThresholdStatus: async () => {
+    return fetchApi<{ data: ThresholdCheckResult }>('/api/threshold/status');
+  },
+
+  checkThresholdBreach: async () => {
+    return fetchApi<{ data: { breached: boolean; status: ThresholdStatus; resultId?: number } }>(
+      '/api/threshold/check'
+    );
+  },
+
+  // Bundesnetzagentur
+  startBundesnetzagenturMeasurement: async (
+    triggerReason: 'manual' | 'threshold_warning' | 'threshold_critical' = 'manual',
+    triggerResultId?: number
+  ) => {
+    return fetchApi<{ data: { id: number; status: string; message: string } }>(
+      '/api/bundesnetzagentur/measure',
+      {
+        method: 'POST',
+        body: JSON.stringify({ triggerReason, triggerResultId }),
+      }
+    );
+  },
+
+  startBundesnetzagenturIfBreached: async () => {
+    return fetchApi<{
+      data: {
+        id?: number;
+        triggered: boolean;
+        status: string;
+        thresholdStatus?: ThresholdStatus;
+        message: string;
+      };
+    }>('/api/bundesnetzagentur/measure-if-breached', { method: 'POST' });
+  },
+
+  getBundesnetzagenturStatus: async () => {
+    return fetchApi<{ data: { isRunning: boolean } }>('/api/bundesnetzagentur/status');
+  },
+
+  getBundesnetzagenturExports: async (limit = 20) => {
+    return fetchApi<{ data: BundesnetzagenturExport[] }>(
+      `/api/bundesnetzagentur/exports?limit=${limit}`
+    );
+  },
+
+  getBundesnetzagenturExport: async (id: number) => {
+    return fetchApi<{ data: BundesnetzagenturExport }>(`/api/bundesnetzagentur/exports/${id}`);
+  },
+
+  getBundesnetzagenturDownloadUrl: (id: number) => {
+    return `${API_BASE}/api/bundesnetzagentur/exports/${id}/download`;
   },
 };

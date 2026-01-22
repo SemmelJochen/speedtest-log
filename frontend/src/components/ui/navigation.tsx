@@ -1,11 +1,12 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, History, BarChart3, Wifi, Server } from 'lucide-react';
+import { LayoutDashboard, History, BarChart3, Wifi, Server, Scale } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/history', label: 'Verlauf', icon: History },
   { href: '/analytics', label: 'Analyse', icon: BarChart3 },
+  { href: '/tkg', label: 'TKG', icon: Scale },
   { href: '/servers', label: 'Server', icon: Server },
 ];
 

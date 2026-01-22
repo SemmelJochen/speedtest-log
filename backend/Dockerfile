@@ -31,26 +31,31 @@ RUN ARCH=$(uname -m) && \
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Install all dependencies (including dev for build)
-RUN npm ci
+# Copy workspace config and lockfile from root
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY backend/package.json ./backend/
+
+# Install backend dependencies only
+RUN pnpm install --filter speedtest-logger-backend --frozen-lockfile
 
 # Copy prisma schema
-COPY prisma ./prisma
+COPY backend/prisma ./backend/prisma
 
 # Generate Prisma client
-RUN npx prisma generate
+WORKDIR /app/backend
+RUN pnpm exec prisma generate
 
-# Copy source code
-COPY . .
+# Copy backend source code
+COPY backend ./
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm run build
 
 # Expose port
 EXPOSE 3001
 
 # Start command with database sync
-CMD ["sh", "-c", "npx prisma db push && npm start"]
+CMD ["sh", "-c", "pnpm exec prisma db push && pnpm start"]

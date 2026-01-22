@@ -1,0 +1,29 @@
+{
+  "name": "speedtest-logger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "./dev.sh",
+    "dev:backend": "pnpm --filter speedtest-logger-backend dev",
+    "dev:frontend": "pnpm --filter speedtest-logger-frontend dev",
+    "build": "pnpm -r build",
+    "build:backend": "pnpm --filter speedtest-logger-backend build",
+    "build:frontend": "pnpm --filter speedtest-logger-frontend build",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter speedtest-logger-backend db:generate",
+    "db:migrate": "pnpm --filter speedtest-logger-backend db:migrate",
+    "db:push": "pnpm --filter speedtest-logger-backend db:push",
+    "db:studio": "pnpm --filter speedtest-logger-backend db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

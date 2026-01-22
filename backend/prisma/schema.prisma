@@ -68,3 +68,44 @@ model SpeedtestResult {
   @@index([timestamp], name: "idx_results_timestamp")
   @@map("speedtest_results")
 }
+
+// TKG Threshold Configuration - stores contracted speed and thresholds
+model ThresholdConfig {
+  id                 Int      @id @default(autoincrement())
+  contractedDownload Int      @map("contracted_download") // in Mbps
+  contractedUpload   Int      @map("contracted_upload")   // in Mbps
+  normalThreshold    Int      @default(90) @map("normal_threshold")   // 90% = Normalgeschwindigkeit
+  criticalThreshold  Int      @default(50) @map("critical_threshold") // 50% = erhebliche Abweichung
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("threshold_config")
+}
+
+// Bundesnetzagentur Export - stores official measurement results
+model BundesnetzagenturExport {
+  id              Int      @id @default(autoincrement())
+  timestamp       DateTime @default(now())
+  triggerReason   String   @map("trigger_reason") @db.VarChar(50) // "manual" | "threshold_warning" | "threshold_critical"
+  triggerResultId Int?     @map("trigger_result_id") // ID of speedtest result that triggered this
+
+  // Measurement results
+  downloadMbps    Decimal? @map("download_mbps") @db.Decimal(10, 2)
+  uploadMbps      Decimal? @map("upload_mbps") @db.Decimal(10, 2)
+  latencyMs       Decimal? @map("latency_ms") @db.Decimal(10, 2)
+
+  // File paths
+  screenshotPath  String?  @map("screenshot_path") @db.VarChar(500)
+  exportPath      String?  @map("export_path") @db.VarChar(500)
+  zipPath         String?  @map("zip_path") @db.VarChar(500)
+
+  // Status tracking
+  status          String   @default("pending") @db.VarChar(20) // "pending" | "running" | "completed" | "failed"
+  error           String?  @db.Text
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([status], name: "idx_exports_status")
+  @@map("bundesnetzagentur_exports")
+}

@@ -31,8 +31,8 @@ services:
   # Backend API + Speedtest Scheduler
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: speedtest-backend
     restart: unless-stopped
     depends_on:
@@ -50,14 +50,16 @@ services:
       CORS_ORIGIN: "*"
     ports:
       - "${BACKEND_PORT:-3001}:3001"
+    volumes:
+      - exports_data:/app/backend/exports
     networks:
       - speedtest-network
 
   # Frontend React App (SPA served via nginx)
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       # VITE_API_URL wird NICHT gesetzt - Frontend erkennt API automatisch
       # basierend auf window.location.hostname (funktioniert im LAN)
     container_name: speedtest-frontend
@@ -71,6 +73,7 @@ services:
 
 volumes:
   postgres_data:
+  exports_data:
 
 networks:
   speedtest-network:

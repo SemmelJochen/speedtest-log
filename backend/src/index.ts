@@ -4,6 +4,8 @@ import { PrismaClient } from '@prisma/client';
 import { config } from './config.js';
 import { SpeedtestService } from './services/speedtest.service.js';
 import { SchedulerService } from './services/scheduler.service.js';
+import { ThresholdService } from './services/threshold.service.js';
+import { BundesnetzagenturService } from './services/bundesnetzagentur.service.js';
 import { registerRoutes } from './routes/index.js';
 import { Logger } from './utils/logger.js';
 
@@ -12,6 +14,8 @@ const log = new Logger('Server');
 const prisma = new PrismaClient();
 const speedtestService = new SpeedtestService(prisma);
 const schedulerService = new SchedulerService(speedtestService);
+const thresholdService = new ThresholdService(prisma);
+const bundesnetzagenturService = new BundesnetzagenturService(prisma);
 
 const fastify = Fastify({
   logger: true,
@@ -38,8 +42,12 @@ async function main() {
     await prisma.$connect();
     log.info('Database connection established');
 
+    // Initialize Bundesnetzagentur service (cleanup stuck measurements)
+    await bundesnetzagenturService.initialize();
+    log.debug('Bundesnetzagentur service initialized');
+
     // Register API routes
-    registerRoutes(fastify, prisma, schedulerService);
+    registerRoutes(fastify, prisma, schedulerService, thresholdService, bundesnetzagenturService);
     log.debug('API routes registered');
 
     // Start the scheduler
@@ -70,6 +78,13 @@ async function main() {
 const shutdown = async () => {
   log.info('Shutdown signal received, stopping services...');
   schedulerService.stop();
+
+  // Cancel any running Bundesnetzagentur measurement
+  if (bundesnetzagenturService.isCurrentlyRunning()) {
+    log.info('Cancelling running Bundesnetzagentur measurement...');
+    await bundesnetzagenturService.cancelCurrentMeasurement();
+  }
+
   await prisma.$disconnect();
   log.info('Database connection closed');
   await fastify.close();

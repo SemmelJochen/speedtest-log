@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TkgRouteImport } from './routes/tkg'
 import { Route as ServersRouteImport } from './routes/servers'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TkgRoute = TkgRouteImport.update({
+  id: '/tkg',
+  path: '/tkg',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServersRoute = ServersRouteImport.update({
   id: '/servers',
   path: '/servers',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/servers': typeof ServersRoute
+  '/tkg': typeof TkgRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/servers': typeof ServersRoute
+  '/tkg': typeof TkgRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/servers': typeof ServersRoute
+  '/tkg': typeof TkgRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/history' | '/servers'
+  fullPaths: '/' | '/analytics' | '/history' | '/servers' | '/tkg'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/history' | '/servers'
-  id: '__root__' | '/' | '/analytics' | '/history' | '/servers'
+  to: '/' | '/analytics' | '/history' | '/servers' | '/tkg'
+  id: '__root__' | '/' | '/analytics' | '/history' | '/servers' | '/tkg'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +76,18 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   HistoryRoute: typeof HistoryRoute
   ServersRoute: typeof ServersRoute
+  TkgRoute: typeof TkgRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tkg': {
+      id: '/tkg'
+      path: '/tkg'
+      fullPath: '/tkg'
+      preLoaderRoute: typeof TkgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/servers': {
       id: '/servers'
       path: '/servers'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   HistoryRoute: HistoryRoute,
   ServersRoute: ServersRoute,
+  TkgRoute: TkgRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

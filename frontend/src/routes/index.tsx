@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
-import { api, type SpeedtestResult, type StatsData, type HourlyData } from '@/api/client';
+import { api, type SpeedtestResult, type StatsData, type HourlyData, type DailyData } from '@/api/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +9,13 @@ import {
   ChartTooltipContent,
   AreaChart,
   Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
 } from '@/components/ui/chart';
 import { formatMbps, formatMs } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -26,6 +29,7 @@ import {
   TrendingUp,
   TrendingDown,
   Clock,
+  Calendar,
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
@@ -43,6 +47,9 @@ function Dashboard() {
   const [latest, setLatest] = useState<SpeedtestResult | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
+  const [dailyData, setDailyData] = useState<DailyData[]>([]);
+  const [allResults, setAllResults] = useState<SpeedtestResult[]>([]);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTimeRange, setSelectedTimeRange] = useState(TIME_RANGES[0]);
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,14 +58,28 @@ function Dashboard() {
   const fetchData = async (hours: number = selectedTimeRange.hours) => {
     try {
       setError(null);
-      const [latestRes, statsRes, hourlyRes] = await Promise.all([
+      // Get date from 14 days ago for day comparison
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+      const [latestRes, statsRes, hourlyRes, dailyRes, resultsRes] = await Promise.all([
         api.getLatestResult(),
         api.getStats(),
         api.getHourlyStats({ hours }),
+        api.getDailyStats({ days: 30 }),
+        api.getResults({ from: fourteenDaysAgo.toISOString(), limit: 5000 }),
       ]);
       setLatest(latestRes.data);
       setStats(statsRes.data);
       setHourlyData(hourlyRes.data);
+      setDailyData(dailyRes.data);
+      setAllResults(resultsRes.data);
+
+      // Auto-select last 3 days with data
+      const uniqueDays = [...new Set(resultsRes.data.map(r =>
+        format(new Date(r.timestamp), 'yyyy-MM-dd')
+      ))].slice(0, 3);
+      setSelectedDays(uniqueDays);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
@@ -109,6 +130,74 @@ function Dashboard() {
       Upload: d.upload,
     };
   });
+
+  // Get unique days from results for day comparison
+  const availableDays = [...new Set(allResults.map(r =>
+    format(new Date(r.timestamp), 'yyyy-MM-dd')
+  ))].sort().reverse();
+
+  // Prepare day comparison data - group by hour of day
+  const dayComparisonData = (() => {
+    // Create 24-hour slots
+    const hours = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      hourLabel: `${i.toString().padStart(2, '0')}:00`,
+    }));
+
+    // For each selected day, compute average download for each hour
+    const dayData: Record<string, Record<number, { sum: number; count: number }>> = {};
+
+    selectedDays.forEach(day => {
+      dayData[day] = {};
+      for (let h = 0; h < 24; h++) {
+        dayData[day][h] = { sum: 0, count: 0 };
+      }
+    });
+
+    allResults.forEach(result => {
+      const day = format(new Date(result.timestamp), 'yyyy-MM-dd');
+      const hour = new Date(result.timestamp).getHours();
+
+      if (selectedDays.includes(day) && result.download.mbps) {
+        dayData[day][hour].sum += result.download.mbps;
+        dayData[day][hour].count += 1;
+      }
+    });
+
+    return hours.map(h => {
+      const point: Record<string, string | number | null> = {
+        hour: h.hour,
+        hourLabel: h.hourLabel,
+      };
+
+      selectedDays.forEach(day => {
+        const data = dayData[day][h.hour];
+        const label = format(new Date(day), 'dd.MM', { locale: de });
+        point[label] = data.count > 0 ? Math.round(data.sum / data.count * 10) / 10 : null;
+      });
+
+      return point;
+    });
+  })();
+
+  // Colors for day comparison lines
+  const dayColors = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    '#8b5cf6',
+    '#f59e0b',
+  ];
+
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev =>
+      prev.includes(day)
+        ? prev.filter(d => d !== day)
+        : [...prev, day].slice(-7) // Max 7 days
+    );
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -269,6 +358,189 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Daily Trend Chart */}
+      {dailyData.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Täglicher Trend (30 Tage)
+            </CardTitle>
+            <CardDescription>
+              Durchschnittliche Download- und Upload-Geschwindigkeiten pro Tag
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer>
+              <LineChart
+                data={dailyData.map((d) => ({
+                  date: format(new Date(d.day), 'dd.MM', { locale: de }),
+                  'Download Avg': d.download.avg,
+                  'Download Min': d.download.min,
+                  'Download Max': d.download.max,
+                  Upload: d.upload,
+                  Ping: d.ping,
+                  Tests: d.count,
+                }))}
+              >
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="date"
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(value) => `${value}`}
+                  label={{ value: 'Mbps', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div className="bg-background border rounded-lg shadow-lg p-3">
+                        <p className="font-medium mb-2">{label}</p>
+                        {payload.map((entry, index) => (
+                          <p key={index} className="text-sm" style={{ color: entry.color }}>
+                            {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}
+                            {entry.name?.includes('Ping') ? ' ms' : entry.name === 'Tests' ? '' : ' Mbps'}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="Download Avg"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Upload"
+                  stroke="hsl(var(--chart-2))"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Download Min"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  opacity={0.5}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Download Max"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  opacity={0.5}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Day Comparison Chart - Compare hours across different days */}
+      {availableDays.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Tagesvergleich (0-24 Uhr)
+            </CardTitle>
+            <CardDescription>
+              Vergleiche Download-Geschwindigkeiten verschiedener Tage nach Uhrzeit
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Day selector */}
+            <div className="flex flex-wrap gap-2">
+              {availableDays.slice(0, 14).map((day, index) => {
+                const isSelected = selectedDays.includes(day);
+                const dayLabel = format(new Date(day), 'EEE dd.MM', { locale: de });
+                return (
+                  <Button
+                    key={day}
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => toggleDay(day)}
+                    style={isSelected ? { backgroundColor: dayColors[selectedDays.indexOf(day) % dayColors.length] } : {}}
+                  >
+                    {dayLabel}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {selectedDays.length > 0 ? (
+              <ChartContainer>
+                <LineChart data={dayComparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="hourLabel"
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={(value) => `${value}`}
+                    label={{ value: 'Mbps', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="bg-background border rounded-lg shadow-lg p-3">
+                          <p className="font-medium mb-2">{label} Uhr</p>
+                          {payload.filter(p => p.value !== null).map((entry, index) => (
+                            <p key={index} className="text-sm" style={{ color: entry.color }}>
+                              {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value} Mbps
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend />
+                  {selectedDays.map((day, index) => {
+                    const label = format(new Date(day), 'dd.MM', { locale: de });
+                    return (
+                      <Line
+                        key={day}
+                        type="monotone"
+                        dataKey={label}
+                        stroke={dayColors[index % dayColors.length]}
+                        strokeWidth={2}
+                        dot={{ r: 2 }}
+                        activeDot={{ r: 5 }}
+                        connectNulls
+                      />
+                    );
+                  })}
+                </LineChart>
+              </ChartContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                Wähle mindestens einen Tag zum Vergleichen aus
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics Overview */}
       {stats && stats.count > 0 && (
