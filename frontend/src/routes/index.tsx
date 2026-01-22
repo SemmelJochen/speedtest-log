@@ -1,6 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
-import { api, type SpeedtestResult, type StatsData, type HourlyData, type DailyData } from '@/api/client';
+import {
+  api,
+  type SpeedtestResult,
+  type StatsData,
+  type HourlyData,
+  type DailyData,
+} from '@/api/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,9 +82,9 @@ function Dashboard() {
       setAllResults(resultsRes.data);
 
       // Auto-select last 3 days with data
-      const uniqueDays = [...new Set(resultsRes.data.map(r =>
-        format(new Date(r.timestamp), 'yyyy-MM-dd')
-      ))].slice(0, 3);
+      const uniqueDays = [
+        ...new Set(resultsRes.data.map((r) => format(new Date(r.timestamp), 'yyyy-MM-dd'))),
+      ].slice(0, 3);
       setSelectedDays(uniqueDays);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -132,9 +138,11 @@ function Dashboard() {
   });
 
   // Get unique days from results for day comparison
-  const availableDays = [...new Set(allResults.map(r =>
-    format(new Date(r.timestamp), 'yyyy-MM-dd')
-  ))].sort().reverse();
+  const availableDays = [
+    ...new Set(allResults.map((r) => format(new Date(r.timestamp), 'yyyy-MM-dd'))),
+  ]
+    .sort()
+    .reverse();
 
   // Prepare day comparison data - group by hour of day
   const dayComparisonData = (() => {
@@ -147,14 +155,14 @@ function Dashboard() {
     // For each selected day, compute average download for each hour
     const dayData: Record<string, Record<number, { sum: number; count: number }>> = {};
 
-    selectedDays.forEach(day => {
+    selectedDays.forEach((day) => {
       dayData[day] = {};
       for (let h = 0; h < 24; h++) {
         dayData[day][h] = { sum: 0, count: 0 };
       }
     });
 
-    allResults.forEach(result => {
+    allResults.forEach((result) => {
       const day = format(new Date(result.timestamp), 'yyyy-MM-dd');
       const hour = new Date(result.timestamp).getHours();
 
@@ -164,16 +172,16 @@ function Dashboard() {
       }
     });
 
-    return hours.map(h => {
+    return hours.map((h) => {
       const point: Record<string, string | number | null> = {
         hour: h.hour,
         hourLabel: h.hourLabel,
       };
 
-      selectedDays.forEach(day => {
+      selectedDays.forEach((day) => {
         const data = dayData[day][h.hour];
         const label = format(new Date(day), 'dd.MM', { locale: de });
-        point[label] = data.count > 0 ? Math.round(data.sum / data.count * 10) / 10 : null;
+        point[label] = data.count > 0 ? Math.round((data.sum / data.count) * 10) / 10 : null;
       });
 
       return point;
@@ -192,10 +200,8 @@ function Dashboard() {
   ];
 
   const toggleDay = (day: string) => {
-    setSelectedDays(prev =>
-      prev.includes(day)
-        ? prev.filter(d => d !== day)
-        : [...prev, day].slice(-7) // Max 7 days
+    setSelectedDays(
+      (prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].slice(-7)) // Max 7 days
     );
   };
 
@@ -402,12 +408,18 @@ function Dashboard() {
                     return (
                       <div className="bg-background border rounded-lg shadow-lg p-3">
                         <p className="font-medium mb-2">{label}</p>
-                        {payload.map((entry, index) => (
-                          <p key={index} className="text-sm" style={{ color: entry.color }}>
-                            {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}
-                            {entry.name?.includes('Ping') ? ' ms' : entry.name === 'Tests' ? '' : ' Mbps'}
-                          </p>
-                        ))}
+                        {payload.map((entry, idx) => {
+                          const name = String(entry.name ?? '');
+                          return (
+                            <p key={idx} className="text-sm" style={{ color: entry.color }}>
+                              {name}:{' '}
+                              {typeof entry.value === 'number'
+                                ? entry.value.toFixed(1)
+                                : entry.value}
+                              {name.includes('Ping') ? ' ms' : name === 'Tests' ? '' : ' Mbps'}
+                            </p>
+                          );
+                        })}
                       </div>
                     );
                   }}
@@ -468,7 +480,7 @@ function Dashboard() {
           <CardContent className="space-y-4">
             {/* Day selector */}
             <div className="flex flex-wrap gap-2">
-              {availableDays.slice(0, 14).map((day, index) => {
+              {availableDays.slice(0, 14).map((day) => {
                 const isSelected = selectedDays.includes(day);
                 const dayLabel = format(new Date(day), 'EEE dd.MM', { locale: de });
                 return (
@@ -477,7 +489,14 @@ function Dashboard() {
                     variant={isSelected ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => toggleDay(day)}
-                    style={isSelected ? { backgroundColor: dayColors[selectedDays.indexOf(day) % dayColors.length] } : {}}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor:
+                              dayColors[selectedDays.indexOf(day) % dayColors.length],
+                          }
+                        : {}
+                    }
                   >
                     {dayLabel}
                   </Button>
@@ -506,11 +525,17 @@ function Dashboard() {
                       return (
                         <div className="bg-background border rounded-lg shadow-lg p-3">
                           <p className="font-medium mb-2">{label} Uhr</p>
-                          {payload.filter(p => p.value !== null).map((entry, index) => (
-                            <p key={index} className="text-sm" style={{ color: entry.color }}>
-                              {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value} Mbps
-                            </p>
-                          ))}
+                          {payload
+                            .filter((p) => p.value !== null)
+                            .map((entry, index) => (
+                              <p key={index} className="text-sm" style={{ color: entry.color }}>
+                                {entry.name}:{' '}
+                                {typeof entry.value === 'number'
+                                  ? entry.value.toFixed(1)
+                                  : entry.value}{' '}
+                                Mbps
+                              </p>
+                            ))}
                         </div>
                       );
                     }}

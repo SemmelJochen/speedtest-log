@@ -37,7 +37,7 @@ export const Route = createFileRoute('/tkg')({
 });
 
 function TKGPage() {
-  const [config, setConfig] = useState<ThresholdConfig | null>(null);
+  const [, setConfig] = useState<ThresholdConfig | null>(null);
   const [status, setStatus] = useState<ThresholdCheckResult | null>(null);
   const [exports, setExports] = useState<BundesnetzagenturExport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -363,9 +363,9 @@ function TKGPage() {
         <CardContent className="space-y-4">
           <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              <strong>Hinweis:</strong> Diese automatisierte Messung dient nur zur
-              Dokumentation. Für rechtlich bindende Nachweise verwende bitte die offizielle
-              Desktop-App der Bundesnetzagentur mit 20 Messungen an 2 aufeinanderfolgenden Tagen.
+              <strong>Hinweis:</strong> Diese automatisierte Messung dient nur zur Dokumentation.
+              Für rechtlich bindende Nachweise verwende bitte die offizielle Desktop-App der
+              Bundesnetzagentur mit 20 Messungen an 2 aufeinanderfolgenden Tagen.
             </p>
             <a
               href="https://breitbandmessung.de"

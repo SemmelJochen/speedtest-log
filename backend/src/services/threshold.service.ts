@@ -178,7 +178,11 @@ export class ThresholdService {
   /**
    * Check if threshold is breached (warning or critical)
    */
-  async isThresholdBreached(): Promise<{ breached: boolean; status: ThresholdStatus; resultId?: number }> {
+  async isThresholdBreached(): Promise<{
+    breached: boolean;
+    status: ThresholdStatus;
+    resultId?: number;
+  }> {
     const latest = await this.prisma.speedtestResult.findFirst({
       where: { error: null },
       orderBy: { timestamp: 'desc' },

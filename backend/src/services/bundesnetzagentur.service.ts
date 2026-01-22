@@ -100,7 +100,11 @@ export class BundesnetzagenturService {
    * Try to click an element using multiple possible selectors
    * Returns true if successful, false otherwise
    */
-  private async tryClickSelectors(page: Page, selectors: string[], description: string): Promise<boolean> {
+  private async tryClickSelectors(
+    page: Page,
+    selectors: string[],
+    description: string
+  ): Promise<boolean> {
     for (const selector of selectors) {
       try {
         const element = await page.$(selector);
@@ -120,7 +124,11 @@ export class BundesnetzagenturService {
   /**
    * Wait for any of the given selectors to appear
    */
-  private async waitForAnySelector(page: Page, selectors: string[], timeout: number): Promise<boolean> {
+  private async waitForAnySelector(
+    page: Page,
+    selectors: string[],
+    timeout: number
+  ): Promise<boolean> {
     const selectorPromises = selectors.map((selector) =>
       page.waitForSelector(selector, { timeout, state: 'visible' }).catch(() => null)
     );
@@ -142,7 +150,11 @@ export class BundesnetzagenturService {
     upload: number | null;
     latency: number | null;
   } {
-    const result = { download: null as number | null, upload: null as number | null, latency: null as number | null };
+    const result = {
+      download: null as number | null,
+      upload: null as number | null,
+      latency: null as number | null,
+    };
 
     try {
       const lines = csvContent.trim().split('\n');
@@ -168,14 +180,18 @@ export class BundesnetzagenturService {
           result.download = numValue;
         } else if (header.includes('upload') || header.includes('senden')) {
           result.upload = numValue;
-        } else if (header.includes('latenz') || header.includes('ping') || header.includes('laufzeit')) {
+        } else if (
+          header.includes('latenz') ||
+          header.includes('ping') ||
+          header.includes('laufzeit')
+        ) {
           result.latency = numValue;
         }
       }
 
       this.log.debug('Parsed CSV', { headers, values, result });
     } catch (error) {
-      this.log.warn('CSV parsing failed', error);
+      this.log.warn('CSV parsing failed', { error: String(error) });
     }
 
     return result;
@@ -228,7 +244,9 @@ export class BundesnetzagenturService {
 
     // Run measurement in background with timeout wrapper
     this.runMeasurementWithTimeout(exportRecord.id).catch((error) => {
-      this.log.error('Measurement failed', error);
+      this.log.error('Measurement failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     });
 
     return exportRecord;
@@ -342,8 +360,8 @@ export class BundesnetzagenturService {
           this.log.info('Clicked "Alle Cookies zulassen"');
           await page.waitForTimeout(500); // Wait for banner to disappear
         }
-      } catch (cookieError) {
-        this.log.debug('Cookie banner not found or already dismissed', cookieError);
+      } catch {
+        this.log.debug('Cookie banner not found or already dismissed');
       }
 
       // STEP 2: Wait for geolocation modal to auto-dismiss (Playwright grants permission)
@@ -353,11 +371,14 @@ export class BundesnetzagenturService {
         if (geoModal) {
           this.log.info('Geolocation modal detected - waiting for auto-dismiss...');
           // Wait for modal to disappear (should happen automatically since we granted permission)
-          await page.waitForSelector(SELECTORS.geolocationModal, { state: 'hidden', timeout: 15000 });
+          await page.waitForSelector(SELECTORS.geolocationModal, {
+            state: 'hidden',
+            timeout: 15000,
+          });
           this.log.info('Geolocation modal dismissed');
         }
-      } catch (geoError) {
-        this.log.debug('Geolocation modal not found or already dismissed', geoError);
+      } catch {
+        this.log.debug('Geolocation modal not found or already dismissed');
       }
 
       // Take screenshot after initial modals
@@ -395,12 +416,15 @@ export class BundesnetzagenturService {
           await page.screenshot({ path: modalScreenshotPath, fullPage: true });
 
           // Click "Akzeptieren"
-          await page.waitForSelector(SELECTORS.consentAcceptButton, { timeout: 5000, state: 'visible' });
+          await page.waitForSelector(SELECTORS.consentAcceptButton, {
+            timeout: 5000,
+            state: 'visible',
+          });
           await page.click(SELECTORS.consentAcceptButton);
           this.log.info('Clicked "Akzeptieren" in consent modal');
         }
-      } catch (modalError) {
-        this.log.warn('Consent modal handling failed', modalError);
+      } catch {
+        this.log.warn('Consent modal handling failed');
       }
 
       // STEP 5: Measurement is now running
@@ -416,17 +440,15 @@ export class BundesnetzagenturService {
       // Detection: h1 text changes to "Die Messung ist abgeschlossen."
       this.log.info('Waiting for "Die Messung ist abgeschlossen"...');
 
-      let completionFound = false;
       try {
         await page.waitForSelector(SELECTORS.completionIndicator, {
           timeout: config.playwright.timeout,
           state: 'visible',
         });
-        completionFound = true;
         this.log.info('Measurement completed - detected completion indicator');
         // Small delay to ensure all results are rendered
         await page.waitForTimeout(2000);
-      } catch (timeoutError) {
+      } catch {
         this.log.warn('Completion indicator not found within timeout, taking screenshot anyway');
       }
 
@@ -480,37 +502,35 @@ export class BundesnetzagenturService {
 
               this.log.info('Extracted results from CSV', { downloadMbps, uploadMbps, latencyMs });
             }
-          } catch (parseError) {
-            this.log.warn('Could not parse CSV file', parseError);
+          } catch {
+            this.log.warn('Could not parse CSV file');
           }
         } else {
           this.log.warn('Export button not found');
         }
-      } catch (exportError) {
-        this.log.warn('CSV export failed', exportError);
+      } catch {
+        this.log.warn('CSV export failed');
       }
 
       // Extract metadata from page (date, time, test-id)
       let testMetadata: { date?: string; time?: string; testId?: string } = {};
       try {
-        testMetadata = await page.evaluate(() => {
-          const timeElements = document.querySelectorAll('time');
-          const date = timeElements[0]?.textContent || undefined;
-          const time = timeElements[1]?.textContent?.replace(' Uhr', '') || undefined;
+        // Use Playwright's locator API to extract metadata
+        const timeElements = await page.locator('time').allTextContents();
+        const date = timeElements[0] || undefined;
+        const time = timeElements[1]?.replace(' Uhr', '') || undefined;
 
-          // Test-ID is in the table
-          const cells = document.querySelectorAll('.more-info td');
-          let testId: string | undefined;
-          for (const cell of cells) {
-            const text = cell.textContent || '';
-            if (text.length > 50 && /^[a-f0-9]+$/.test(text)) {
-              testId = text;
-              break;
-            }
+        // Test-ID is in the table - look for long hex string
+        const cells = await page.locator('.more-info td').allTextContents();
+        let testId: string | undefined;
+        for (const text of cells) {
+          if (text.length > 50 && /^[a-f0-9]+$/.test(text)) {
+            testId = text;
+            break;
           }
+        }
 
-          return { date, time, testId };
-        });
+        testMetadata = { date, time, testId };
         this.log.info('Extracted metadata', testMetadata);
       } catch {
         this.log.debug('Could not extract metadata');
@@ -553,7 +573,7 @@ export class BundesnetzagenturService {
       this.log.info('Measurement completed successfully', { exportId, zipPath });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.log.error('Measurement failed', error);
+      this.log.error('Measurement failed', { error: errorMessage });
 
       await this.prisma.bundesnetzagenturExport.update({
         where: { id: exportId },
@@ -591,7 +611,10 @@ export class BundesnetzagenturService {
       testMetadata?: { date?: string; time?: string; testId?: string };
     }
   ): Promise<string> {
-    const zipPath = path.join(config.exports.zipsDir, this.generateFilename(`measurement_${exportId}`, 'zip'));
+    const zipPath = path.join(
+      config.exports.zipsDir,
+      this.generateFilename(`measurement_${exportId}`, 'zip')
+    );
 
     return new Promise((resolve, reject) => {
       const output = createWriteStream(zipPath);

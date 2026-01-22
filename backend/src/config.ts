@@ -27,7 +27,7 @@ export const config = {
   threshold: {
     defaultContractedDownload: parseInt(process.env.CONTRACTED_DOWNLOAD_MBPS || '100', 10),
     defaultContractedUpload: parseInt(process.env.CONTRACTED_UPLOAD_MBPS || '40', 10),
-    normalThreshold: 90,   // 90% = Normalgeschwindigkeit nach TKG
+    normalThreshold: 90, // 90% = Normalgeschwindigkeit nach TKG
     criticalThreshold: 50, // 50% = erhebliche Abweichung nach TKG
   },
 

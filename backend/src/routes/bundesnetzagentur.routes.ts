@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import type { BundesnetzagenturService } from '../services/bundesnetzagentur.service.js';
 import type { ThresholdService } from '../services/threshold.service.js';
 import { z } from 'zod';
@@ -118,7 +118,10 @@ export function registerBundesnetzagenturRoutes(
     return {
       data: {
         cleanedUp,
-        message: cleanedUp > 0 ? `${cleanedUp} stuck measurements cleaned up` : 'No stuck measurements found',
+        message:
+          cleanedUp > 0
+            ? `${cleanedUp} stuck measurements cleaned up`
+            : 'No stuck measurements found',
       },
     };
   });
