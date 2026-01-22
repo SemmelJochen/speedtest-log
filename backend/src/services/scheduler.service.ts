@@ -67,7 +67,7 @@ export class SchedulerService {
   /**
    * Check if threshold is breached and trigger Bundesnetzagentur measurement
    */
-  private async checkThresholdAndTrigger(resultId?: number): Promise<void> {
+  private async checkThresholdAndTrigger(_resultId?: number): Promise<void> {
     if (!this.thresholdService || !this.bundesnetzagenturService) {
       this.log.debug('Threshold services not configured, skipping auto-trigger check');
       return;
