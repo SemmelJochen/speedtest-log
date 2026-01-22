@@ -13,9 +13,14 @@ const log = new Logger('Server');
 
 const prisma = new PrismaClient();
 const speedtestService = new SpeedtestService(prisma);
-const schedulerService = new SchedulerService(speedtestService);
 const thresholdService = new ThresholdService(prisma);
 const bundesnetzagenturService = new BundesnetzagenturService(prisma);
+// Pass threshold and bundesnetzagentur services for automatic TKG measurement triggering
+const schedulerService = new SchedulerService(
+  speedtestService,
+  thresholdService,
+  bundesnetzagenturService
+);
 
 const fastify = Fastify({
   logger: true,
