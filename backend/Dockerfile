@@ -1,9 +1,30 @@
-# Backend Dockerfile with Speedtest CLI
-FROM node:20-alpine
+# Backend Dockerfile with Speedtest CLI and Playwright
+FROM node:20-slim
 
-# Install dependencies for speedtest-cli and Prisma
-# libc6-compat provides glibc compatibility for the speedtest binary
-RUN apk add --no-cache curl ca-certificates openssl libc6-compat
+# Install dependencies for speedtest-cli, Prisma, and Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    openssl \
+    # Playwright dependencies
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Ookla Speedtest CLI manually
 # Detect architecture and download appropriate binary
@@ -41,6 +62,10 @@ COPY backend/package.json ./backend/
 # Install backend dependencies only
 RUN pnpm install --filter speedtest-logger-backend --frozen-lockfile
 
+# Install Playwright Chromium browser
+# This downloads the browser binary to the correct location
+RUN cd backend && pnpm exec playwright install chromium
+
 # Copy prisma schema
 COPY backend/prisma ./backend/prisma
 
@@ -53,6 +78,9 @@ COPY backend ./
 
 # Build TypeScript
 RUN pnpm run build
+
+# Create exports directory for Bundesnetzagentur measurements
+RUN mkdir -p /app/backend/exports/screenshots /app/backend/exports/data /app/backend/exports/zips
 
 # Expose port
 EXPOSE 3001
